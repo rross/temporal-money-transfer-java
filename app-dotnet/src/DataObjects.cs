@@ -10,10 +10,11 @@ public enum ExecutionScenario
     INVALID_ACCOUNT
 }
 
+// public record WorkflowParameterObj(int amountCents, string scenario);
 public record WorkflowParameterObj
 {
     public required int AmountCents { get; init; }
-    public string Scenario { get; init;} = string.Empty;
+    public required string Scenario { get; init;}
     public ExecutionScenario ExecutionScenario
     { 
         get

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net;
 using Microsoft.Extensions.Logging;
 using Temporalio.Activities;
 
@@ -15,7 +14,7 @@ public class AccountTransferActivities
     {
         ActivityExecutionContext.Current.Logger.LogInformation("\n\nAPI /validate\n");
 
-        return (scenario != ExecutionScenario.HUMAN_IN_LOOP);
+        return (scenario == ExecutionScenario.HUMAN_IN_LOOP);
     }
      
     [Activity]
