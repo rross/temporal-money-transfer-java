@@ -1,6 +1,7 @@
 using Temporalio.Client;
 using Temporalio.Testing;
 using Temporalio.Worker;
+using Temporalio.Exceptions;
 using Xunit;
 
 using MoneyTransfer;
@@ -98,6 +99,79 @@ public class MoneyTransferTests
             var result = await handle.GetResultAsync();
             var expected = new ChargeResponse("example-charge-id");
             Assert.Equal(expected, result);
+        });
+    }
+
+    [Fact]
+    public async Task RunAsync_MoneyTransfer_HumanInLoop_Approved()
+    {
+         // await using var env = await WorkflowEnvironment.StartLocalAsync();
+         await using var env = await WorkflowEnvironment.StartTimeSkippingAsync();
+         var clientOptions = (TemporalClientOptions)env.Client.Options.Clone();
+         var client = new TemporalClient(env.Client.Connection, clientOptions);
+         var taskQueue = Guid.NewGuid().ToString();
+         var workerOptions = new TemporalWorkerOptions(taskQueue).
+            AddAllActivities(new AccountTransferActivities()).
+            AddWorkflow<TransferWorkflow>();
+
+        using var worker = new TemporalWorker(client, workerOptions);
+        await worker.ExecuteAsync(async () =>
+        {
+            var amountCents = 1000;
+            var parameters = new WorkflowParameterObj() 
+            {
+                AmountCents = amountCents, 
+                Scenario = "HUMAN_IN_LOOP"
+            };
+            var handle = await client.StartWorkflowAsync(
+                (TransferWorkflow wf) => wf.RunAsync(parameters),
+                new(
+                    id: "HumanInLoopID",
+                    taskQueue: taskQueue));
+            
+            // Skip time so we're waiting for a signal
+            Thread.Sleep(TimeSpan.FromSeconds(1));
+
+            // signal the workflow
+            await handle.SignalAsync(wf => wf.ApproveTransfer());
+            
+            // Wait for the workflow to complete
+            var result = await handle.GetResultAsync();
+            var expected = new ChargeResponse("example-charge-id");
+            Assert.Equal(expected, result);
+        });
+    }
+
+    [Fact]
+    public async Task RunAsync_MoneyTransfer_HumanInLoop_NotApproved()
+    {
+         // await using var env = await WorkflowEnvironment.StartLocalAsync();
+         await using var env = await WorkflowEnvironment.StartTimeSkippingAsync();
+         var clientOptions = (TemporalClientOptions)env.Client.Options.Clone();
+         var client = new TemporalClient(env.Client.Connection, clientOptions);
+         var taskQueue = Guid.NewGuid().ToString();
+         var workerOptions = new TemporalWorkerOptions(taskQueue).
+            AddAllActivities(new AccountTransferActivities()).
+            AddWorkflow<TransferWorkflow>();
+
+        using var worker = new TemporalWorker(client, workerOptions);
+        await worker.ExecuteAsync(async () =>
+        {
+            var amountCents = 1000;
+            var parameters = new WorkflowParameterObj() 
+            {
+                AmountCents = amountCents, 
+                Scenario = "HUMAN_IN_LOOP"
+            };
+            var handle = await client.StartWorkflowAsync(
+                (TransferWorkflow wf) => wf.RunAsync(parameters),
+                new(
+                    id: "HumanInLoopID",
+                    taskQueue: taskQueue));
+        
+            // Wait for the workflow to complete
+            // will fail because it wasn't approved
+            Assert.ThrowsAsync<ApplicationFailureException> (async () => await handle.GetResultAsync());
         });
     }
 }
