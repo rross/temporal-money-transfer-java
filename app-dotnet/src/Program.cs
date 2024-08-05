@@ -1,7 +1,8 @@
-﻿using MoneyTransfer;
-
+﻿using Microsoft.Extensions.Logging;
 using Temporalio.Client;
 using Temporalio.Worker;
+
+using MoneyTransfer;
 
 String getEnvVarWithDefault(String envName, String defaultValue) 
 {
@@ -31,6 +32,10 @@ var client = await TemporalClient.ConnectAsync(
     { 
         Namespace = temporalNamespace,
         Tls = tls,
+        LoggerFactory = LoggerFactory.Create(builder =>
+        builder.
+            AddSimpleConsole(options => options.TimestampFormat = "[HH:mm:ss] ").
+            SetMinimumLevel(LogLevel.Information)),
     });
 
 using var tokenSource = new CancellationTokenSource();
@@ -44,7 +49,7 @@ var activities = new AccountTransferActivities();
 
 using var worker = new TemporalWorker(
     client,
-    new TemporalWorkerOptions("simple-task-queue").
+    new TemporalWorkerOptions("MoneyTransferJava").
     AddAllActivities(activities).
     AddWorkflow<TransferWorkflow>());
 

@@ -173,5 +173,5 @@ public class MoneyTransferTests
             // will fail because it wasn't approved
             Assert.ThrowsAsync<ApplicationFailureException> (async () => await handle.GetResultAsync());
         });
-    }
+    } 
 }

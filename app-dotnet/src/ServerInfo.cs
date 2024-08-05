@@ -31,7 +31,7 @@ public static class ServerInfo
     {
         get
         {
-            return Int32.Parse(getEnvVarWithDefault("TEMPORAL_MONEYTRANSFER_SLEEP","0"));
+            return Int32.Parse(getEnvVarWithDefault("TEMPORAL_MONEYTRANSFER_SLEEP","5"));
         }
     }
 }

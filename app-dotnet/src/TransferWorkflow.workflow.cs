@@ -4,7 +4,7 @@ using Temporalio.Workflows;
 
 namespace MoneyTransfer;
 
-[Workflow]
+[Workflow("moneyTransferWorkflow")]
 public class TransferWorkflow {
 
     ActivityOptions options = new () {
@@ -17,6 +17,8 @@ public class TransferWorkflow {
     [WorkflowRun]
     public async Task<ChargeResponse> RunAsync(WorkflowParameterObj parameters)
     {
+        Workflow.Logger.LogInformation($"Running workflow with scenario: {parameters.ExecutionScenario}");
+
         transferState = "starting";
         progressPercentage = 25;
 
@@ -39,7 +41,7 @@ public class TransferWorkflow {
             if (!received)
             {
                 Workflow.Logger.LogInformation(
-                    "Approval not recieved within the " + 
+                    "Approval not received within the " + 
                     approvalTime + 
                     " -second time window: Failing the workflow.");
 
@@ -65,12 +67,12 @@ public class TransferWorkflow {
         await Workflow.DelayAsync(TimeSpan.FromSeconds(2));
 
         // Simulate bug in workflow
-        if (parameters.ExecutionScenario == ExecutionScenario.BUG_IN_WORKLOW)
+        if (parameters.ExecutionScenario == ExecutionScenario.BUG_IN_WORKFLOW)
         {
             // Throw an error to simulate a bug in the workflow
             // uncomment the following line and restart workers to fix the bug
-            Workflow.Logger.LogInformation("\n\nSimulating workflow task failure.\n\n");
-            throw new InvalidOperationException("Simulating workflow bug!");
+            Workflow.Logger.LogInformation("\nSimulating workflow task failure.\n");
+            // throw new InvalidOperationException("Simulating workflow bug!");
         }
 
         if (parameters.ExecutionScenario == ExecutionScenario.ADVANCED_VISIBILITY)
@@ -120,7 +122,7 @@ public class TransferWorkflow {
         }
     }
     
-    [WorkflowQuery]
+    [WorkflowQuery("transferStatus")]
     public StateObject TransferStatus
     {
         get

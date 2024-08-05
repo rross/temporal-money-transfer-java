@@ -12,7 +12,7 @@ public class AccountTransferActivities
     [Activity]
     public bool Validate(ExecutionScenario scenario) 
     {
-        ActivityExecutionContext.Current.Logger.LogInformation("\n\nAPI /validate\n");
+        ActivityExecutionContext.Current.Logger.LogInformation($"\nAPI /validate. Scenario {scenario}\n");
 
         return (scenario == ExecutionScenario.HUMAN_IN_LOOP);
     }
@@ -21,20 +21,20 @@ public class AccountTransferActivities
     public async Task<string> WithdrawAsync(float amountDollars, ExecutionScenario scenario) 
     {
         ActivityExecutionContext.Current.Logger.LogInformation(
-            $"\n\nAPI /withdraw amount = {amountDollars}",amountDollars);
+            $"\nAPI /withdraw amount = {amountDollars}");
 
         if (scenario == ExecutionScenario.API_DOWNTIME)
         {
             var info = ActivityExecutionContext.Current.Info;
             ActivityExecutionContext.Current.Logger.LogInformation(
-                "\n\n**** Simulating API Downtime\n");
+                "\n**** Simulating API Downtime\n");
             if (info.Attempt < 5)
             {
                 ActivityExecutionContext.Current.Logger.LogInformation(
                     "\n*** Activity Attempt: # " + info.Attempt + "***\n");
                 var delaySeconds = 7;
                 ActivityExecutionContext.Current.Logger.LogInformation(
-                    "\n\n/API/simulateDelay Seconds" + delaySeconds + "\n");
+                    "\n/API/simulateDelay Seconds" + delaySeconds + "\n");
                 var response = await SimulateDelay(delaySeconds);
             }
         }
@@ -45,7 +45,7 @@ public class AccountTransferActivities
     [Activity]
     public ChargeResponse Deposit(String idempotencyKey, float amountDollars, ExecutionScenario scenario)  
     {
-        ActivityExecutionContext.Current.Logger.LogInformation("\n\nAPI /deposit amount = " + amountDollars + "\n");
+        ActivityExecutionContext.Current.Logger.LogInformation($"\nAPI /deposit amount = {amountDollars}");
 
         if (scenario == ExecutionScenario.INVALID_ACCOUNT)
         {
@@ -59,7 +59,7 @@ public class AccountTransferActivities
     public bool UndoWithdraw(float amountDollars)
     {
         ActivityExecutionContext.Current.Logger.LogInformation(
-            "\n\nAPI /undoWithdraw amount = " + amountDollars + " \n");
+            $"\nAPI /undoWithdraw amount = {amountDollars}");
 
         return true;
     }
@@ -69,7 +69,7 @@ public class AccountTransferActivities
         var url = ServerInfo.WebServerURL;
         var urlPath ="/simulateDelay?s=" + seconds;
         ActivityExecutionContext.Current.Logger.LogInformation(            
-            "\n\n/API/simulateDelay URL: " + url + " path: " + urlPath + "\n");
+            $"\n/API/simulateDelay URL: {url} path: {urlPath}");
 
         using var httpClient = new HttpClient()
         {
