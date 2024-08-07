@@ -1,13 +1,17 @@
 using Microsoft.Extensions.Logging;
+using Temporalio.Common;
 using Temporalio.Exceptions;
 using Temporalio.Workflows;
 
 namespace MoneyTransfer;
 
 [Workflow("moneyTransferWorkflow")]
-public class TransferWorkflow {
+public class TransferWorkflow 
+{
+    private readonly static SearchAttributeKey<string> stepAttributKey = SearchAttributeKey.CreateKeyword("Step");
 
-    ActivityOptions options = new () {
+    ActivityOptions options = new () 
+    {
         StartToCloseTimeout = TimeSpan.FromSeconds(5),
         RetryPolicy = new() {
             NonRetryableErrorTypes = [ nameof(InvalidAccountException), ],
@@ -56,6 +60,17 @@ public class TransferWorkflow {
         if (parameters.ExecutionScenario == ExecutionScenario.ADVANCED_VISIBILITY)
         {
             // TODO - Advanced Visiblity
+            // Workflow.UpsertTypedSearchAttributes();
+            var searchAttributes = Workflow.TypedSearchAttributes;
+            Workflow.Logger.LogInformation($"Search attributes is {searchAttributes}");
+            Workflow.Logger.LogInformation($"There are {searchAttributes.Count} search attributes.");
+            var foundSearchAttribute = searchAttributes.ContainsKey("Step");
+            Workflow.Logger.LogInformation($"Search attribute found? {foundSearchAttribute}");
+            var untypedValues = searchAttributes.UntypedValues;
+            Workflow.Logger.LogInformation($"Untyped Values has {untypedValues.Count} entities");
+            //var foundUntypedSearchAttribute = untypedValues.ContainsKey("Step");
+            //Workflow.Logger.LogInformation($"untyped contains value? {untypedValues.Count} values");
+            Workflow.UpsertTypedSearchAttributes(stepAttributKey.ValueSet("Withdraw"));
             // Pause for dramatic effect
             await Workflow.DelayAsync(TimeSpan.FromSeconds(5));            
         }
@@ -72,12 +87,12 @@ public class TransferWorkflow {
             // Throw an error to simulate a bug in the workflow
             // uncomment the following line and restart workers to fix the bug
             Workflow.Logger.LogInformation("\nSimulating workflow task failure.\n");
-            // throw new InvalidOperationException("Simulating workflow bug!");
+            throw new InvalidOperationException("Simulating workflow bug!");
         }
 
         if (parameters.ExecutionScenario == ExecutionScenario.ADVANCED_VISIBILITY)
         {
-            // TODO - Advanced Visiblity     
+            Workflow.UpsertTypedSearchAttributes(stepAttributKey.ValueSet("Deposit")); 
         }
 
         try 
@@ -111,14 +126,14 @@ public class TransferWorkflow {
     [WorkflowSignal]
     public async Task ApproveTransfer()
     {
-        Workflow.Logger.LogInformation("\n\nApprove Signal Received\n\n");
+        Workflow.Logger.LogInformation("\nApprove Signal Received\n");
         if (transferState == "waiting")
         {
             approved = true;
         }
         else
         {
-            Workflow.Logger.LogInformation("\n\nSignal not applied: Transfer is not waiting for approval.\n\n");
+            Workflow.Logger.LogInformation($"\nSignal not applied: Transfer is not waiting for approval. {transferState}\n");
         }
     }
     

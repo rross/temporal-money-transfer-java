@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Temporalio.Client;
 using Temporalio.Testing;
 using Temporalio.Worker;
@@ -43,9 +44,9 @@ public class MoneyTransferTests
         var pBug = new WorkflowParameterObj()
         {
             AmountCents = 0,
-            Scenario = "BUG_IN_WORKLOW"
+            Scenario = "BUG_IN_WORKFLOW"
         };
-        Assert.Equal(ExecutionScenario.BUG_IN_WORKLOW, pBug.ExecutionScenario);
+        Assert.Equal(ExecutionScenario.BUG_IN_WORKFLOW, pBug.ExecutionScenario);
 
         var pInvalidAccount = new WorkflowParameterObj()
         {
@@ -68,7 +69,7 @@ public class MoneyTransferTests
         };
         Assert.Throws<ArgumentException> (() => pError.ExecutionScenario);
     }
-
+    
     [Fact]
     public async Task RunAsync_MoneyTransfer_HappyPath()
     {
@@ -105,14 +106,19 @@ public class MoneyTransferTests
     [Fact]
     public async Task RunAsync_MoneyTransfer_HumanInLoop_Approved()
     {
-         // await using var env = await WorkflowEnvironment.StartLocalAsync();
-         await using var env = await WorkflowEnvironment.StartTimeSkippingAsync();
+         await using var env = await WorkflowEnvironment.StartLocalAsync();
+         // await using var env = await WorkflowEnvironment.StartTimeSkippingAsync();
          var clientOptions = (TemporalClientOptions)env.Client.Options.Clone();
          var client = new TemporalClient(env.Client.Connection, clientOptions);
          var taskQueue = Guid.NewGuid().ToString();
          var workerOptions = new TemporalWorkerOptions(taskQueue).
             AddAllActivities(new AccountTransferActivities()).
             AddWorkflow<TransferWorkflow>();
+
+        // workerOptions.LoggerFactory = LoggerFactory.Create(builder =>
+        //     builder.
+        //         AddSimpleConsole(options => options.TimestampFormat = "[HH:mm:ss] ").
+        //         SetMinimumLevel(LogLevel.Information));
 
         using var worker = new TemporalWorker(client, workerOptions);
         await worker.ExecuteAsync(async () =>
@@ -130,11 +136,11 @@ public class MoneyTransferTests
                     taskQueue: taskQueue));
             
             // Skip time so we're waiting for a signal
-            Thread.Sleep(TimeSpan.FromSeconds(1));
+            Thread.Sleep(TimeSpan.FromSeconds(ServerInfo.WorkflowSleepDuration+1));
 
             // signal the workflow
             await handle.SignalAsync(wf => wf.ApproveTransfer());
-            
+
             // Wait for the workflow to complete
             var result = await handle.GetResultAsync();
             var expected = new ChargeResponse("example-charge-id");
@@ -171,7 +177,7 @@ public class MoneyTransferTests
         
             // Wait for the workflow to complete
             // will fail because it wasn't approved
-            Assert.ThrowsAsync<ApplicationFailureException> (async () => await handle.GetResultAsync());
+            await Assert.ThrowsAsync<WorkflowFailedException> (async () => await handle.GetResultAsync());
         });
     } 
 }
