@@ -16,17 +16,18 @@ String getEnvVarWithDefault(String envName, String defaultValue)
 
 var address = getEnvVarWithDefault("TEMPORAL_ADDRESS","127.0.0.1:7233");
 var temporalNamespace = getEnvVarWithDefault("TEMPORAL_NAMESPACE","default");
-var tlsCertPath = getEnvVarWithDefault("TEMPORAL_TLS_CERT","");
-var tlsKeyPath = getEnvVarWithDefault("TEMPORAL_TLS_KEY","");
+var tlsCertPath = getEnvVarWithDefault("TEMPORAL_CERT_PATH","");
+var tlsKeyPath = getEnvVarWithDefault("TEMPORAL_KEY_PATH","");
 TlsOptions? tls = null;
 if (!String.IsNullOrEmpty(tlsCertPath) && !String.IsNullOrEmpty(tlsKeyPath))
 {
+    Console.WriteLine("setting TLS");
     tls = new() {
         ClientCert = await File.ReadAllBytesAsync(tlsCertPath),
         ClientPrivateKey = await File.ReadAllBytesAsync(tlsKeyPath),
     };
 }
-
+Console.WriteLine($"Address is {address}");
 var client = await TemporalClient.ConnectAsync(
     new(address)  
     { 
