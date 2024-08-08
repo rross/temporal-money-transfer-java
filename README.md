@@ -1,4 +1,4 @@
-# money-transfer
+# Temporal Money Transfer Demo
 
 Demonstrates a Money Transfer Demo for [Temporal](https://temporal.io) using the [Java](https://docs.temporal.io/develop/java) and [.NET](https://docs.temporal.io/develop/dotnet/) SDKs
 
@@ -41,6 +41,8 @@ cd app-dotnet/src
 dotnet run
 ```
 
+You are now ready to use the [Demo UI](http://localhost:7070/) to demonstrate Temporal features.
+
 ## Run On Temporal Cloud
 To run everything on Temporal Cloud, follow these instructions
 
@@ -80,3 +82,5 @@ cd app-dotnet/src
 source ../cloudenvsetup.sh
 dotnet run
 ```
+
+You are now ready to use the [Demo UI](http://localhost:7070/) to demonstrate Temporal features.
