@@ -154,19 +154,19 @@ public class TransferWorkflow
         return Task.FromResult("successfully approved transfer");
     }
 
-    // [WorkflowUpdateValidator]
-    // public void approveTransferUpdateValidator() 
-    // {
-    //     Workflow.Logger.LogInformation("\n\nApprove Update Validated: Approving Transfer\n\n");
-    //     if (approved) 
-    //     {
-    //         throw new InvalidOperationException("Validation Failed: Transfer already approved");
-    //     }
-    //     if (transferState != "waiting")
-    //     {
-    //         throw new InvalidOperationException("Validation Failed: Transfer doesn't require approval");
-    //     }
-    // }
+    [WorkflowUpdateValidator("ApproveTransferUpdate")]
+    public void approveTransferUpdateValidator() 
+    {
+        Workflow.Logger.LogInformation("\n\nApprove Update Validated: Approving Transfer\n\n");
+        if (approved) 
+        {
+            throw new InvalidOperationException("Validation Failed: Transfer already approved");
+        }
+        if (transferState != "waiting")
+        {
+            throw new InvalidOperationException("Validation Failed: Transfer doesn't require approval");
+        }
+    }
 
     // These variables are reflected in the UI
     private int progressPercentage = 10;
